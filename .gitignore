@@ -1,0 +1,5 @@
+# ide specific settings
+.vscode/
+
+# Dependency directories
+node_modules/
