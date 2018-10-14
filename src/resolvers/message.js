@@ -1,40 +1,27 @@
-import uuidv4 from 'uuid/v4';
-
 export default {
-    Query: {
-        message: (_, {id}, {models}) => {
-            return models.messages[id];
-        },
-        messages: (_, args, {models}) => {
-            return Object.values(models.messages);
-        }
+  Query: {
+    message: async (_, { id }, { models }) => {
+      return await models.Message.findById(id);
     },
-    Mutation: {
-        createMessage: (_, {text}, { me }, {models}) => {
-            const id = uuidv4();
-            const message = {
-                id,
-                text,
-                userId: me.id
-            }
-            models.messages[id] = message;
-            models.users[me.id].messageIds.push(id);
-            return message;
-        },
-        deleteMessage: (_, {id}, {models}) => {
-            let message;
-            if(messages[id]) {
-                delete models.messages[id];
-                message = `Successfully deleted : ${id}`;
-            } else {
-                message = 'Invalid message id !!';
-            }
-            return message;
-        }
-    },
-    Message : {
-        user: (message, _, {models}) => {
-            return models.users[message.userId];
-        }
+    messages: (_, args, { models }) => {
+      return models.Message.findAll();
     }
-}
+  },
+  Mutation: {
+    createMessage: async (_, { text }, { me, models }) => {
+      const message = {
+        text,
+        userId: me.id
+      };
+      return await models.Message.create(message);
+    },
+    deleteMessage: async (_, { id }, { models }) => {
+      return models.Message.destroy({ where: { id } });
+    }
+  },
+  Message: {
+    user: async (message, _, { models }) => {
+      return await models.User.findById(message.userId);
+    }
+  }
+};
