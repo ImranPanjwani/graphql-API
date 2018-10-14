@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer, AuthenticationError } from 'apollo-server-express';
 
 import resolvers from './resolvers';
 import schema from './schema';
@@ -8,12 +8,37 @@ import models, { sequelize } from './models';
 
 const app = express();
 
+const getMe = async req => {
+  const token = req.headers['x-token'];
+
+  if (token) {
+    try {
+      return await jwt.verify(token, process.env.SECRET);
+    } catch (error) {
+      throw new AuthenticationError('Your session expired. Sign in again');
+    }
+  }
+};
+
 const server = new ApolloServer({
   typeDefs: schema,
   resolvers,
-  context: {
-    // models
-    // me : models.users[0]
+  formatError: error => {
+    const message = error.message.replace('Validation error: ', '');
+
+    return {
+      ...error,
+      message
+    };
+  },
+  context: async ({ req }) => {
+    const me = await getMe(req);
+
+    return {
+      models,
+      me,
+      secret: process.env.SECRET
+    };
   }
 });
 
@@ -35,6 +60,8 @@ const createUsersWithMessages = async () => {
   await models.User.create(
     {
       username: 'rwieruch',
+      email: 'hello@robin.com',
+      password: 'rwieruch',
       messages: [
         {
           text: 'Published the Road to learn React'
@@ -49,6 +76,8 @@ const createUsersWithMessages = async () => {
   await models.User.create(
     {
       username: 'ddavids',
+      email: 'hello@david.com',
+      password: 'ddavids',
       messages: [
         {
           text: 'Happy to release ...'

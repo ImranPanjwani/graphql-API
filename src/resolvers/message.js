@@ -8,8 +8,7 @@ export default {
     }
   },
   Mutation: {
-    createMessage: async (_, { text }, { me }, { models }) => {
-      const id = uuidv4();
+    createMessage: async (_, { text }, { me, models }) => {
       const message = {
         text,
         userId: me.id
